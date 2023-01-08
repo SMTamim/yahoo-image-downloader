@@ -5,10 +5,10 @@ searching on keyword placed in the keyord.txt file with comma(,) seperated.
 
 
 ## Requirements:
-`pip install requests`
-`pip install bs4`
-`pip install lxml`
-`pip install selenium`
-`pip install undetected-chromedriver`
-`pip install webdriver-manager`
+- `pip install requests`
+- `pip install bs4`
+- `pip install lxml`
+- `pip install selenium`
+- `pip install undetected-chromedriver`
+- `pip install webdriver-manager`
 
