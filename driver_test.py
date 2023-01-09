@@ -1,5 +1,6 @@
 import os.path
 import threading
+import ctypes
 import time
 
 import requests
@@ -31,20 +32,34 @@ class StoppableThread(threading.Thread):
     def stopped(self):
         return self._stop_event.is_set()
 
+    def get_id(self):
+
+        # returns id of the respective thread
+        if hasattr(self, '_thread_id'):
+            return self._thread_id
+        for id_, thread in threading._active.items():
+            if thread is self:
+                return id_
+
+    def raise_exception(self):
+        raise Exception(f'Forcefully closed. {self.get_id()}. Name: {self.name}')
+
     def download_f(self):
         url = self.url
         folder_name = self.folder_name
         print(f"URL: {url}")
         print(f"Keyword: {folder_name}")
         try:
-            img_data = requests.get(url, allow_redirects=True)
-        except:
+            img_data = requests.get(url, allow_redirects=True, timeout=(5, 15))
+        except Exception:
             try:
-                img_data = requests.get(url, allow_redirects=True, verify=False)
-            except:
+                img_data = requests.get(url, allow_redirects=True, verify=False, timeout=(5, 15))
+            except Exception:
                 return
-
-        content_type = img_data.headers["content-type"].split("/")
+        try:
+            content_type = img_data.headers["content-type"].split("/")
+        except Exception:
+            return
         if content_type[0] == 'image':
             ext = content_type[1]
         else:
@@ -78,26 +93,6 @@ class StoppableThread(threading.Thread):
             except Exception as e:
                 print(e)
                 return
-
-#
-# def get_file_name(links):
-#     for link in links:
-#         extension = ['.jpg', '.jpeg', '.png', 'gif']
-#         a = urlparse(link)
-#         print(a.path)
-#         print("FileName:", os.path.basename(a.path))
-#         if any(word in link.lower() for word in extension):
-#             print("Have Extension")
-#         else:
-#             try:
-#                 response = requests.get(link)
-#             except:
-#                 response = requests.get(link, verify=False)
-#             print(response.headers)
-#             input()
-#             _, extenson = response.headers["content-type"].split("/")
-#             print(link)
-#             print(f'{os.path.basename(a.path)}.{extenson}')
 
 
 def main():
@@ -157,7 +152,7 @@ def main():
         #     for link in image_urls:
         #         file.write(link + "\n")
         # exit()
-        threads = []
+        # image_urls = image_urls[-126:]
         threads_ori = []
         thread_per_run = 100
 
@@ -193,20 +188,12 @@ def main():
                         '\n####################################################\n#######     Waiting For       #######\n#######    ' + thread.name + '    #######\n####################################################\n')
             time.sleep(13)
 
-        for thread in threads_ori:
-            print(thread.name)
-            thread.stop()
-            print(thread.stopped())
-    exit()
-            # thrd.join()
-
-        # for idx, url in enumerate(image_urls):
-        #     print(f"{len(image_urls)-(idx+1)} Left of keyword - {keyword}.")
-        #     print(url)
-        #     download_f(url, keyword)
-            # wget.download(url, f'{os.path.abspath(f"./images")}/{img_name}')
-
-
+        if any(thread.is_alive() for thread in threads_ori):
+            for thread in threads_ori:
+                if not thread.is_alive():
+                    threads_ori.remove(thread)
+                else:
+                    thread.join()
 
 
 if __name__ == '__main__':
